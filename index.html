@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <style>
+    /* Basic CSS for layout */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #87CEEB;
+      color: #333;
+    }
+
+    .app {
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      position: relative; /* Set position relative for absolute elements inside */
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 20px; /* Space between input and weather info */
+    }
+
+    .location {
+      margin-top: 20px;
+    }
+
+    .current {
+      margin-top: 10px;
+    }
+
+    .temp {
+      font-size: 40px;
+      font-weight: bold;
+    }
+
+    .weather {
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    .hi-low {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #555;
+    }
+
+    /* Notification style */
+    #notification {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ffcc00; /* Yellow background for warning */
+      color: #333;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      display: none; /* Hidden by default */
+      transition: opacity 0.5s ease; /* Smooth fade effect */
+    }
+  </style>
+</head>
+<body>
+  <div id="notification"></div> <!-- Notification element -->
+  <div class="app">
+    <input type="text" class="search-box" placeholder="Enter city name..." />
+    <div class="location">
+      <div class="city">-</div>
+      <div class="date">-</div>
+    </div>
+    <div class="current">
+      <div class="temp">-</div>
+      <div class="weather">-</div>
+      <div class="hi-low">-</div>
+    </div>
+  </div>
+
+  <script>
+    const warningThreshold = 30; // Temperature threshold for warning
+    const api = {
+      key: "fcc8de7015bbb202209bbf0261babf4c",
+      base: "https://api.openweathermap.org/data/2.5/"
+    };
+
+    const searchbox = document.querySelector('.search-box');
+    searchbox.addEventListener('keypress', setQuery);
+
+    function setQuery(evt) {
+      if (evt.keyCode === 13) {
+        getResults(searchbox.value);
+      }
+    }
+
+    function getResults(query) {
+      fetch(`${api.base}weather?q=${query}&units=metric&APPID=${api.key}`)
+        .then(weather => weather.json())
+        .then(displayResults);
+    }
+
+    function displayResults(weather) {
+      let city = document.querySelector('.location .city');
+      city.innerHTML = `${weather.name}, ${weather.sys.country}`;
+
+      let now = new Date();
+      let date = document.querySelector('.location .date');
+      date.innerHTML = dateBuilder(now);
+
+      let temp = document.querySelector('.current .temp');
+      temp.innerHTML = `${Math.round(weather.main.temp)}<span>°c</span>`;
+
+      let weather_el = document.querySelector('.current .weather');
+      weather_el.innerHTML = weather.weather[0].main;
+
+      let hilow = document.querySelector('.hi-low');
+      hilow.innerHTML = `${Math.round(weather.main.temp_min)}°c / ${Math.round(weather.main.temp_max)}°c`;
+
+      // Show notification if temperature exceeds threshold
+      let notification = document.getElementById('notification');
+      if (Math.round(weather.main.temp) > warningThreshold) {
+        notification.innerHTML = `Warning: High Temperature! ${Math.round(weather.main.temp)}°C at ${searchbox.value}`;
+        notification.style.display = 'block'; // Show notification
+        setTimeout(() => { notification.style.opacity = '0'; }, 10000); // Fade out
+        setTimeout(() => { notification.style.display = 'none'; notification.style.opacity = '1'; }, 15000); // Hide after 1.5s
+      } else {
+        notification.style.display = 'none'; // Hide notification if no warning
+      }
+    }
+
+    function dateBuilder(d) {
+      let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+      let day = days[d.getDay()];
+      let date = d.getDate();
+      let month = months[d.getMonth()];
+      let year = d.getFullYear();
+
+      return `${day} ${date} ${month} ${year}`;
+    }
+  </script>
+</body>
+</html>
